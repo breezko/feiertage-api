@@ -1,5 +1,9 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
+import asyncio
+import os
+import logging
+from contextlib import asynccontextmanager, suppress
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
@@ -27,13 +31,76 @@ VALID_STATES = {
     "TH",
 }
 
+logger = logging.getLogger("keepalive")
+logging.basicConfig(level=logging.INFO)
+
+KEEPALIVE_INTERVAL_SECONDS = 30
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan handler for startup/shutdown logic.
+
+    On startup: start keep-alive ping loop.
+    On shutdown: cancel keep-alive task cleanly.
+    """
+    # Prefer explicit KEEPALIVE_URL, fall back to Render's default external URL
+    base_url = os.getenv("KEEPALIVE_URL") or os.getenv("RENDER_EXTERNAL_URL")
+
+    if not base_url:
+        logger.warning(
+            "No KEEPALIVE_URL or RENDER_EXTERNAL_URL set – keepalive disabled."
+        )
+        # Still yield so the app starts up; there's just no keepalive
+        yield
+        return
+
+    base_url = base_url.rstrip("/")
+    url = f"{base_url}/health"
+
+    async def _keepalive_loop() -> None:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            while True:
+                try:
+                    resp = await client.get(url)
+                    logger.info("Keepalive ping %s -> %s", url, resp.status_code)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("Keepalive ping failed: %r", exc)
+                await asyncio.sleep(KEEPALIVE_INTERVAL_SECONDS)
+
+    task = asyncio.create_task(_keepalive_loop())
+    app.state.keepalive_task = task
+    logger.info(
+        "Keepalive task started, pinging %s every %s seconds",
+        url,
+        KEEPALIVE_INTERVAL_SECONDS,
+    )
+
+    try:
+        # Hand control back to FastAPI (the app runs while this is in effect)
+        yield
+    finally:
+        # Shutdown: stop the keepalive loop
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
+        logger.info("Keepalive task stopped")
+
+
 app = FastAPI(
     title="Feiertage API Wrapper",
     version="1.0.0",
     description=(
         "Eigener Wrapper um https://feiertage-api.de – JSON passthrough und iCal-Export."
     ),
+    lifespan=lifespan,
 )
+
+
+@app.get("/health", include_in_schema=False)
+async def health():
+    return {"status": "ok"}
 
 
 async def fetch_feiertage(
