@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
         async with httpx.AsyncClient(timeout=5.0) as client:
             while True:
                 try:
-                    resp = await client.get(url)
+                    resp = await client.head(url)
                     logger.info("Keepalive ping %s -> %s", url, resp.status_code)
                 except Exception as exc:  # noqa: BLE001
                     logger.warning("Keepalive ping failed: %r", exc)
