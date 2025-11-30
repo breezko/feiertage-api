@@ -1,4 +1,5 @@
 # Deutschland Feiertage 
+[![Maven Central](https://img.shields.io/badge/feiertage--api.onrender.com%20-8A2BE2)](https://feiertage-api.onrender.com/)
 
 *a.k.a "BundesAPI on steroids"*
 
@@ -6,10 +7,15 @@
 Eigener kleiner Service, der die öffentliche API von  
 [`https://feiertage-api.de`](https://feiertage-api.de/) kapselt und zusätzlich einen **iCal-Export** anbietet.
 
-- 🔁 JSON passthrough zu `feiertage-api.de`
-- 📅 iCalendar (`.ics`) Feed für Kalender-Abos (Google Calendar, Apple Kalender, Outlook, …)
-- ⚡ Modernes Python-Setup mit [`uv`](https://docs.astral.sh/uv/) und FastAPI
-- 🆓 Für Free-/Hobby-Hosting ausgelegt (z. B. Render, Railway, Fly.io)
+- JSON passthrough zu `feiertage-api.de`
+- iCalendar (`.ics`) Feed für Kalender-Abos (Google Calendar, Apple Kalender, Outlook, …)
+- Modernes Python-Setup mit [`uv`](https://docs.astral.sh/uv/) und FastAPI
+
+
+Produktion:
+- Base URL: [feiertage-api.onrender.com](https://feiertage-api.onrender.com/)
+- Swagger: [feiertage-api.onrender.com/docs](https://feiertage-api.onrender.com/docs)
+
 
 ---
 
@@ -25,7 +31,6 @@ Eigener kleiner Service, der die öffentliche API von
 - [Beispiele](#beispiele)
   - [JSON](#json)
   - [iCal](#ical)
-- [Deployment-Hinweise](#deployment-hinweise)
 - [Lizenz](#lizenz)
 
 ---
@@ -95,15 +100,6 @@ Developer-Dokumentation:
 * ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 * OpenAPI JSON: [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json)
 
-### Produktion / einfaches Run-Command
-
-```bash
-uv run fastapi run app/main.py --host 0.0.0.0 --port 8000
-```
-
-Dieses Kommando kannst du z. B. auch in einem Hosting-Provider als Startkommando verwenden.
-
----
 
 ## API-Endpunkte
 
